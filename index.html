@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>RASTRO-IMAGE · Expediente OSINT · Imágenes</title>
+<meta name="description" content="RASTRO-IMAGE: análisis local-first, OSINT, geolocalización GPS reforzada, comparación y búsqueda inversa de imágenes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exifreader@4/dist/exif-reader.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/spark-md5@3.0.2/spark-md5.min.js"></script>
+<style>
+:root{
+ --kraft:#d9c9a3;--kraft-dark:#c4b088;--kraft-shadow:#a8926a;--paper:#f0e6cc;--paper-dark:#e4d7b0;
+ --ink:#2b2320;--ink-soft:#4a3f36;--red:#9c2b2b;--red-dark:#6f1c1c;--blue:#1f3d5c;--blue-dark:#142a40;
+ --green:#33502f;--green-dark:#213620;--amber:#8a6a1c;--amber-dark:#5e480f;--tape:rgba(230,220,180,.62);--tab:#c9a876;
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}html,body{margin:0;padding:0}
+body{background:repeating-linear-gradient(0deg,rgba(0,0,0,.015) 0,rgba(0,0,0,.015) 1px,transparent 1px,transparent 3px),radial-gradient(ellipse at 20% 10%,rgba(255,255,255,.15),transparent 60%),var(--kraft);color:var(--ink);font-family:'Courier Prime','Courier New',monospace;min-height:100vh}
+button,input,select,textarea{font:inherit}a{color:inherit}.title-font{font-family:'Special Elite','Courier New',monospace;letter-spacing:1px}.hidden{display:none!important}
+.folder-wrap{max-width:1100px;margin:28px auto 60px;padding:0 16px}.folder-tab{display:inline-block;background:var(--tab);border:2px solid var(--ink);border-bottom:none;padding:8px 26px 10px;margin-left:30px;border-radius:8px 8px 0 0;font-family:'Special Elite',monospace;font-size:13px;letter-spacing:2px}
+.folder-body{position:relative;background:var(--paper);background-image:radial-gradient(circle at 85% 5%,rgba(255,255,255,.35),transparent 40%);border:3px solid var(--ink);border-radius:4px 10px 10px 10px;padding:30px 26px 24px;box-shadow:6px 6px 0 rgba(0,0,0,.18),0 22px 45px rgba(30,20,10,.28)}
+.tape{position:absolute;width:110px;height:34px;background:var(--tape);border:1px solid rgba(80,60,30,.25);box-shadow:0 1px 3px rgba(0,0,0,.15);opacity:.9}.t1{top:-16px;left:36px;transform:rotate(-5deg)}.t2{top:-14px;right:60px;transform:rotate(4deg)}.corner{position:absolute;width:26px;height:26px;opacity:.55}.corner.tl{top:8px;left:8px;border-top:3px solid;border-left:3px solid}.corner.br{bottom:8px;right:8px;border-bottom:3px solid;border-right:3px solid}.stamp-mark{position:absolute;top:18px;right:26px;border:2px solid var(--red-dark);color:var(--red-dark);padding:4px 12px;border-radius:5px;transform:rotate(6deg);font-family:'Special Elite',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.75}
+header{text-align:center;margin-bottom:18px}.brandline{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px}.brand-badge{width:46px;height:46px;border:2px solid var(--ink);border-radius:50%;display:grid;place-items:center;background:var(--paper-dark);font-size:24px}.brand-txt{text-align:left}.eyebrow{font-size:10px;letter-spacing:.18em;color:var(--amber-dark);text-transform:uppercase}.brand-name{font-family:'Special Elite',monospace;font-size:14px}.brand-name span{color:var(--blue)}h1{font-family:'Special Elite',monospace;font-size:clamp(30px,5vw,46px);margin:4px 0 4px}.subtitle{color:var(--ink-soft);font-size:13px;max-width:76ch;margin:0 auto 10px;line-height:1.55}.case-meta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:10.5px;color:var(--ink-soft)}.case-meta span{border:1px solid var(--ink);background:var(--paper-dark);border-radius:10px;padding:3px 10px}
+.search-box{background:var(--paper-dark);border:2px solid var(--ink);border-radius:6px;padding:18px;margin:18px 0;box-shadow:3px 3px 0 rgba(0,0,0,.12)}.dropzone{border:2px dashed var(--ink);border-radius:6px;background:rgba(255,255,255,.15);padding:20px;text-align:center;cursor:pointer;min-height:135px;display:flex;align-items:center;justify-content:center;transition:.12s}.dropzone.drag{background:#f5edda;border-color:var(--blue);transform:translateY(-1px)}.dropzone strong{font-family:'Special Elite';font-size:17px}.dropzone p{font-size:11.5px;color:var(--ink-soft);line-height:1.5;margin:6px 0 0}.upload-grid{display:grid;grid-template-columns:minmax(260px,.72fr) 1fr;gap:14px;align-items:stretch}.preview-card{border:2px solid var(--ink);border-radius:6px;background:var(--paper);padding:10px;min-height:135px}.preview-card img{width:100%;height:205px;object-fit:contain;background:#d7caa8;border:1px solid var(--ink);display:block}.filemeta{font-size:10.5px;color:var(--ink-soft);margin-top:7px;display:flex;justify-content:space-between;gap:10px}.filemeta b{color:var(--ink);max-width:72%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{font-family:'Special Elite',monospace;font-size:12px;letter-spacing:.5px;padding:10px 14px;border:2.5px solid var(--blue-dark);background:var(--blue);color:#eef2eb;border-radius:6px;cursor:pointer;box-shadow:2px 2px 0 var(--blue-dark);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px}.btn:hover{filter:brightness(1.1);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--blue-dark)}.btn.red{background:var(--red);border-color:var(--red-dark);box-shadow:2px 2px 0 var(--red-dark)}.btn.green{background:var(--green);border-color:var(--green-dark);box-shadow:2px 2px 0 var(--green-dark)}.btn.amber{background:var(--amber);border-color:var(--amber-dark);box-shadow:2px 2px 0 var(--amber-dark)}.btn.ghost{background:var(--paper);color:var(--ink);border-color:var(--ink);box-shadow:2px 2px 0 var(--ink)}.btn.small{font-size:10px;padding:7px 10px}.btn[disabled]{opacity:.42;cursor:not-allowed;transform:none;filter:none}.toolrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}.privacy-note{font-size:10.8px;color:var(--ink-soft);line-height:1.5;margin-top:10px;border-left:4px solid var(--green);padding:7px 10px;background:#eee4c8}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:14px 0}.stat{background:var(--paper);border:1.5px solid var(--ink);border-radius:6px;padding:10px 8px;text-align:center;min-width:0}.stat b{display:block;font-size:13px;font-family:'Special Elite',monospace;word-break:break-all}.stat span{font-size:9.3px;color:var(--ink-soft);text-transform:uppercase}.stat.accent b{font-size:18px;color:var(--blue)}
+.section-title{display:flex;align-items:center;gap:10px;margin:26px 0 8px}.section-title .num{font-family:'Special Elite';font-size:12px;background:var(--blue);color:#f0ead4;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0}.section-title h2{font-size:16px;margin:0}.section-desc{font-size:11.5px;color:var(--ink-soft);margin:-2px 0 10px;line-height:1.55}
+details.category{border:2px solid var(--ink);border-radius:6px;margin-bottom:10px;background:var(--paper);box-shadow:2px 2px 0 rgba(0,0,0,.1);overflow:hidden}details.category summary{cursor:pointer;padding:12px 14px;background:var(--kraft-dark);font-family:'Special Elite';font-weight:700;letter-spacing:1px;font-size:13px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--ink);list-style:none}details.category:not([open]) summary{border-bottom:none}details.category summary::-webkit-details-marker{display:none}details.category summary:after{content:'▸';font-size:15px}details.category[open] summary:after{transform:rotate(90deg)}.cat-body{padding:14px}.cat-intro{font-size:11.5px;color:var(--ink-soft);line-height:1.55;margin:0 0 12px}.warnbox{font-size:10.8px;line-height:1.5;color:var(--amber-dark);background:#f3e9cf;border-left:4px solid var(--amber-dark);padding:8px 10px;margin:10px 0;border-radius:4px}
+.kv{display:grid;grid-template-columns:220px 1fr;border-top:1px solid var(--ink)}.kv div{padding:7px 9px;border-bottom:1px solid rgba(43,35,32,.38);font-size:11.5px;word-break:break-word}.kv .k{font-weight:700;background:var(--paper-dark)}.finding-grid,.engine-grid,.compare-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.finding{border:1.5px solid var(--ink);border-radius:6px;padding:10px;background:var(--paper)}.finding h4{font-family:'Special Elite';font-size:12px;margin:0 0 5px}.finding p{font-size:10.8px;color:var(--ink-soft);margin:0;line-height:1.45}.finding.good{border-left:5px solid var(--green)}.finding.warn{border-left:5px solid var(--amber)}.finding.bad{border-left:5px solid var(--red)}
+.engine{border:1.5px solid var(--ink);border-radius:6px;padding:12px;background:var(--paper)}.engine h3{font-family:'Special Elite';font-size:13px;margin:0 0 4px}.engine p{font-size:10.5px;color:var(--ink-soft);min-height:43px;line-height:1.45;margin:0 0 9px}.engine.face{border-color:var(--red-dark);background:#f1dfcb}.tag{display:inline-block;font-size:8.5px;padding:2px 5px;border:1px solid var(--ink);border-radius:8px;margin-left:4px;background:var(--paper-dark)}
+.geo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.geo-box{border:2px solid var(--ink);background:var(--paper-dark);border-radius:6px;padding:12px}.coords{font-family:'Special Elite';font-size:19px;color:var(--blue);word-break:break-all}.geo-dms{font-size:12px;color:var(--ink-soft);margin-top:3px;word-break:break-all}.geo-box label{font-size:9.5px;color:var(--ink-soft);display:block;text-transform:uppercase;margin-bottom:4px}.manual-coords{display:grid;grid-template-columns:1fr 1fr;gap:8px}.manual-coords input,.field input,.field select{width:100%;border:2px solid var(--ink);background:var(--paper);border-radius:4px;padding:8px 9px;color:var(--ink)}
+.gps-note{font-size:9.5px;color:var(--ink-soft);margin:8px 0 0;line-height:1.5}.badge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:9px;border:1px solid var(--ink);margin-left:5px;letter-spacing:.3px;vertical-align:1px}.badge.good{background:#dfe9d8;color:var(--green-dark)}.badge.bad{background:#f3d9d5;color:var(--red-dark)}.badge.warn{background:#f3e9cf;color:var(--amber-dark)}
+.canvas-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.canvas-card{border:1.5px solid var(--ink);border-radius:6px;background:var(--paper-dark);padding:9px}.canvas-card .head{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--ink-soft);margin-bottom:7px}.canvas-card canvas{display:block;width:100%;height:auto;max-height:440px;object-fit:contain;background:#cdbf99;border:1px solid var(--ink);border-radius:4px}.range-row{display:grid;grid-template-columns:120px 1fr 48px;gap:8px;align-items:center;font-size:10.5px;margin:8px 0}.range-row input{width:100%}.palette{display:flex;gap:7px;flex-wrap:wrap}.swatch{width:86px;border:1px solid var(--ink);border-radius:4px;overflow:hidden}.swatch i{display:block;height:42px}.swatch span{display:block;background:var(--paper-dark);font-size:9px;text-align:center;padding:4px}
+.compare-upload{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mini-drop{border:2px dashed var(--ink);background:var(--paper-dark);border-radius:6px;padding:12px;text-align:center;cursor:pointer;min-height:94px;display:grid;place-items:center}.mini-drop img{width:100%;height:180px;object-fit:contain;background:#d2c49c;border:1px solid var(--ink);margin-top:8px}.compare-view{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}.compare-view canvas{width:100%;height:auto;border:1.5px solid var(--ink);background:#d2c49c;border-radius:4px}.compare-stat{border:1.5px solid var(--ink);border-radius:6px;padding:10px;background:var(--paper-dark);text-align:center}.compare-stat b{display:block;font-family:'Special Elite';font-size:18px;color:var(--blue)}.compare-stat span{font-size:9px;color:var(--ink-soft);text-transform:uppercase}
+textarea.report,textarea.ocr{width:100%;min-height:260px;border:2px solid var(--ink);border-radius:5px;background:#f4ead2;color:var(--ink);padding:12px;resize:vertical;font-size:11.5px;line-height:1.5}.ocr{min-height:150px!important}.progress{height:10px;border-radius:99px;background:var(--paper-dark);border:1.5px solid var(--ink);overflow:hidden;margin:8px 0}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--green));transition:.2s}.stringbox{max-height:210px;overflow:auto;border:1.5px solid var(--ink);background:var(--paper-dark);padding:9px;border-radius:5px;font-size:10.5px;white-space:pre-wrap;word-break:break-all}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field label{display:block;font-size:9.5px;text-transform:uppercase;color:var(--ink-soft);margin:0 0 4px}.footer{text-align:center;color:var(--ink-soft);font-size:10px;margin-top:22px;padding-top:15px;border-top:1px dashed var(--ink)}
+@media(max-width:800px){.upload-grid,.geo-grid,.canvas-grid,.two-col{grid-template-columns:1fr}.stats-row{grid-template-columns:repeat(2,1fr)}.compare-view{grid-template-columns:1fr}.kv{grid-template-columns:120px 1fr}}
+@media(max-width:560px){.folder-wrap{padding:0 8px;margin-top:18px}.folder-body{padding:25px 13px 18px}.compare-upload{grid-template-columns:1fr}.stamp-mark{display:none}.toolrow .btn{flex:1 1 auto}}
+</style>
+</head>
+<body>
+<div class="folder-wrap">
+ <div class="folder-tab">EXPEDIENTE · IMAGE</div>
+ <div class="folder-body">
+  <div class="tape t1"></div><div class="tape t2"></div><div class="corner tl"></div><div class="corner br"></div><div class="stamp-mark">OSINT · LOCAL FIRST</div>
+  <header>
+   <div class="brandline"><div class="brand-badge">⌖</div><div class="brand-txt"><div class="eyebrow">RASTRO KIT · INVESTIGACIÓN DIGITAL</div><div class="brand-name">Herramienta <span>OSINT</span> para imágenes</div></div></div>
+   <h1>RASTRO-IMAGE</h1>
+   <p class="subtitle">Analiza una imagen, extrae pistas, geolocaliza con verificación cruzada, compara fotografías y prepara búsquedas inversas desde un único expediente.</p>
+   <div class="case-meta"><span>v2.3</span><span>ANÁLISIS LOCAL</span><span>SIN API KEY</span><span>GPS VERIFICADO POR 2 MOTORES</span></div>
+  </header>
+
+  <section class="search-box">
+   <div class="upload-grid" id="uploadGrid">
+    <div class="dropzone" id="dropMain"><div><strong>01 · CARGAR IMAGEN OBJETIVO</strong><p>Arrastra una fotografía o pulsa aquí. El análisis técnico se ejecuta en el navegador.</p><div class="toolrow" style="justify-content:center"><button class="btn" type="button">Seleccionar imagen</button></div></div></div>
+    <div class="preview-card hidden" id="mainPreviewCard"><img id="mainPreview" alt="Vista previa de la imagen objetivo"><div class="filemeta"><span>Archivo</span><b id="mainName">—</b></div><div class="filemeta"><span>Tamaño</span><b id="mainSize">—</b></div><div class="toolrow"><button class="btn small ghost" id="btnChange">Cambiar</button><button class="btn small red" id="btnClear">Limpiar expediente</button></div></div>
+   </div>
+   <input type="file" id="mainFile" hidden>
+   <div class="privacy-note"><b>TRATAMIENTO:</b> hashes, metadatos, GPS, histogramas, ELA, filtros, OCR, recortes y comparación se procesan localmente. Las búsquedas externas y los mapas solo se cargan cuando abres el servicio correspondiente.</div>
+  </section>
+
+  <div class="stats-row">
+   <div class="stat accent"><b id="stDimensions">—</b><span>Dimensiones</span></div>
+   <div class="stat"><b id="stType">—</b><span>Tipo real / declarado</span></div>
+   <div class="stat"><b id="stMeta">—</b><span>Metadatos</span></div>
+   <div class="stat"><b id="stGps">—</b><span>GPS</span></div>
+   <div class="stat"><b id="stFindings">0</b><span>Hallazgos</span></div>
+  </div>
+
+  <div class="section-title"><span class="num">1</span><h2>LECTURA RÁPIDA DEL INVESTIGADOR</h2></div>
+  <p class="section-desc">Indicadores automáticos de interés. Son orientativos y deben contrastarse con el archivo original y el contexto de obtención.</p>
+  <div class="finding-grid" id="findings"><div class="finding"><h4>Esperando imagen</h4><p>Carga un archivo para iniciar el análisis.</p></div></div>
+
+  <div class="section-title"><span class="num">2</span><h2>METADATOS, INTEGRIDAD Y ESTRUCTURA</h2></div>
+  <details class="category" open><summary>Ficha técnica y hashes</summary><div class="cat-body"><div class="kv" id="techTable"></div><div class="toolrow"><button class="btn small ghost" id="copySha">Copiar SHA-256</button><button class="btn small ghost" id="copyHashes">Copiar hashes</button></div></div></details>
+  <details class="category" open><summary>Estado de integridad de metadatos</summary><div class="cat-body"><div id="metaIntegrity" class="finding"><h4>Esperando imagen</h4><p>Se evaluará la presencia y conservación aparente de EXIF, GPS, XMP e IPTC.</p></div></div></details>
+  <details class="category"><summary>EXIF · XMP · IPTC</summary><div class="cat-body"><p class="cat-intro">Metadatos declarados por el archivo. Una ausencia de EXIF no implica manipulación; plataformas y editores pueden eliminarlos.</p><div class="kv" id="metaTable"></div><div class="toolrow"><button class="btn small ghost" id="copyMeta">Copiar metadatos</button><button class="btn small" id="exportMeta">Exportar JSON</button></div></div></details>
+  <details class="category"><summary>Strings y datos incrustados</summary><div class="cat-body"><p class="cat-intro">Extrae secuencias ASCII legibles del archivo para localizar nombres de software, comentarios, rutas, URLs u otros artefactos.</p><div class="stringbox" id="stringsBox">—</div></div></details>
+
+  <div class="section-title"><span class="num">3</span><h2>GEOLOCALIZACIÓN</h2></div>
+  <p class="section-desc">RASTRO-IMAGE lee el GPS con dos motores EXIF independientes y contrasta el resultado entre ambos. Cuando coinciden, la lectura queda marcada como confirmada; cuando difieren, se marca como discrepancia para revisión manual.</p>
+  <details class="category" open><summary>Coordenadas y pivotes cartográficos</summary><div class="cat-body">
+   <div class="geo-grid">
+    <div class="geo-box">
+     <label>Coordenadas detectadas</label>
+     <div class="coords" id="gpsCoords">SIN GPS EXIF</div>
+     <div class="geo-dms" id="gpsDms">—</div>
+     <div id="gpsAlt" style="font-size:10.5px;color:var(--ink-soft);margin-top:8px;line-height:1.7"></div>
+     <div id="gpsFlags"></div>
+     <div class="toolrow">
+      <button class="btn small amber" id="openAllGeo" disabled>Abrir Maps+StreetView+OSM</button>
+      <button class="btn small" id="openGmaps" disabled>Google Maps</button>
+      <button class="btn small green" id="openStreet" disabled>Street View</button>
+      <button class="btn small ghost" id="openOsm" disabled>OpenStreetMap</button>
+      <button class="btn small ghost" id="openBing" disabled>Bing Maps</button>
+      <button class="btn small ghost" id="openEarth" disabled>Google Earth</button>
+      <button class="btn small ghost" id="openGeoUri" disabled>Abrir en app (geo:)</button>
+     </div>
+     <div class="toolrow">
+      <button class="btn small ghost" id="copyGps" disabled>Copiar decimal</button>
+      <button class="btn small ghost" id="copyDms" disabled>Copiar DMS</button>
+      <button class="btn small ghost" id="copyGpsFull" disabled>Copiar ficha completa</button>
+      <button class="btn small" id="exportGeojson" disabled>Exportar GeoJSON</button>
+      <button class="btn small" id="exportKml" disabled>Exportar KML</button>
+     </div>
+     <p class="gps-note">Nota GIS: GeoJSON y KML usan el orden [longitud, latitud]. Comprueba el orden de ejes al importar en otras herramientas (Maltego, QGIS, etc.).</p>
+    </div>
+    <div class="geo-box">
+     <label>Coordenadas manuales / hipótesis</label>
+     <div class="manual-coords"><input id="manualLat" inputmode="decimal" placeholder='Latitud: 40.4468 ó 40°26&#39;46.3"N'><input id="manualLon" inputmode="decimal" placeholder='Longitud: -3.7038 ó 3°42&#39;13.7"W'></div>
+     <div class="toolrow"><button class="btn small" id="manualMaps">Maps</button><button class="btn small green" id="manualStreet">Street View</button><button class="btn small amber" id="searchCoords">Buscar coordenadas</button></div>
+     <div style="font-size:10.5px;color:var(--ink-soft);margin-top:12px;border-top:1px dashed var(--ink);padding-top:9px">Distancia a las coordenadas detectadas: <b id="distanceOut" style="color:var(--ink)">—</b></div>
+     <p style="font-size:10px;color:var(--ink-soft);margin-bottom:0;margin-top:6px">Acepta grados decimales o DMS. Útil si las coordenadas proceden de otra fuente, de un análisis visual, o para contrastar contra una dirección o punto de interés conocido.</p>
+    </div>
+   </div>
+  </div></details>
+
+  <div class="section-title"><span class="num">4</span><h2>BÚSQUEDA INVERSA Y ROSTROS</h2></div>
+  <p class="section-desc">Cada motor aporta una cobertura distinta. Para evidencia sensible, valora previamente la conveniencia de subir el archivo a terceros.</p>
+  <div class="engine-grid">
+   <div class="engine"><h3>Google Lens <span class="tag">GENERAL</span></h3><p>Coincidencias visuales, objetos, lugares, texto y páginas que contienen imágenes similares.</p><button class="btn small ext" data-url="https://lens.google.com/">Abrir Lens ↗</button></div>
+   <div class="engine"><h3>Bing Visual Search <span class="tag">GENERAL</span></h3><p>Alternativa de búsqueda visual con carga de archivo y análisis de contenido.</p><button class="btn small ext" data-url="https://www.bing.com/visualsearch">Abrir Bing ↗</button></div>
+   <div class="engine"><h3>Yandex Images <span class="tag">GENERAL</span></h3><p>Segundo motor útil para escenas, objetos, lugares y variantes visualmente parecidas.</p><button class="btn small ext" data-url="https://yandex.com/images/">Abrir Yandex ↗</button></div>
+   <div class="engine"><h3>TinEye <span class="tag">COPIAS</span></h3><p>Especialmente útil para rastrear reutilizaciones, recortes, versiones antiguas y resoluciones alternativas.</p><button class="btn small ext" data-url="https://tineye.com/">Abrir TinEye ↗</button></div>
+   <div class="engine face"><h3>PimEyes <span class="tag">ROSTROS</span></h3><p>Búsqueda inversa especializada en caras sobre sitios web públicos. Usa una fotografía frontal y clara cuando sea posible.</p><button class="btn small red ext" data-url="https://pimeyes.com/en">Abrir PimEyes ↗</button></div>
+  </div>
+  <div class="warnbox"><b>ROSTROS:</b> PimEyes indica que su servicio está orientado a localizar la propia imagen y que sus términos deben respetarse. En uso profesional, documenta la base jurídica, finalidad y tratamiento de la imagen conforme a tus procedimientos.</div>
+
+  <div class="section-title"><span class="num">5</span><h2>IMAGE INTELLIGENCE</h2></div>
+  <details class="category" open><summary>Inspección visual · ELA · histograma</summary><div class="cat-body">
+   <div class="toolrow"><button class="btn small ghost filter" data-filter="original">Original</button><button class="btn small ghost filter" data-filter="gray">Grises</button><button class="btn small ghost filter" data-filter="invert">Negativo</button><button class="btn small ghost filter" data-filter="edges">Bordes</button><button class="btn small ghost filter" data-filter="highpass">High-pass</button></div>
+   <div class="canvas-grid" style="margin-top:10px"><div class="canvas-card"><div class="head"><span>INSPECTOR</span><b id="filterLabel">Original</b></div><canvas id="inspectCanvas"></canvas></div><div class="canvas-card"><div class="head"><span>ELA</span><b>orientativo</b></div><canvas id="elaCanvas"></canvas><div class="range-row"><span>Calidad JPEG</span><input type="range" id="elaQ" min="70" max="98" value="90"><b id="elaQv">90%</b></div><div class="range-row"><span>Amplificación</span><input type="range" id="elaScale" min="2" max="30" value="12"><b id="elaSv">12×</b></div></div></div>
+   <div class="warnbox"><b>ELA:</b> diferencias de recompresión, bordes, ruido, reescalado o múltiples guardados pueden producir patrones llamativos. No debe usarse de forma aislada para afirmar una manipulación.</div>
+   <div class="two-col"><div><h3 class="title-font" style="font-size:12px">PALETA DOMINANTE</h3><div class="palette" id="palette"></div></div><div><h3 class="title-font" style="font-size:12px">HISTOGRAMA RGB</h3><canvas id="histCanvas" style="width:100%;height:150px;border:1.5px solid var(--ink);background:#f4ead2"></canvas></div></div>
+  </div></details>
+  <details class="category"><summary>Recortes de investigación</summary><div class="cat-body"><p class="cat-intro">Genera recortes de trabajo sin alterar el archivo original. Si el navegador dispone de FaceDetector, puede detectar y extraer rostros automáticamente.</p><div class="toolrow"><button class="btn small" id="detectFaces">Detectar rostros</button><button class="btn small ghost cropPreset" data-crop="center">Recorte central</button><button class="btn small ghost cropPreset" data-crop="top">Mitad superior</button><button class="btn small ghost cropPreset" data-crop="bottom">Mitad inferior</button></div><div id="crops" class="engine-grid" style="margin-top:10px"></div></div></details>
+  <details class="category"><summary>OCR · QR · códigos</summary><div class="cat-body"><div class="two-col"><div><div class="field"><label>Idioma OCR</label><select id="ocrLang"><option value="spa">Español</option><option value="eng">English</option><option value="spa+eng">Español + English</option></select></div><div class="toolrow"><button class="btn small" id="runOcr">Ejecutar OCR</button><button class="btn small ghost" id="copyOcr">Copiar texto</button></div><div class="progress"><i id="ocrBar"></i></div><div id="ocrStatus" style="font-size:10px;color:var(--ink-soft)">Sin ejecutar</div><textarea class="ocr" id="ocrOut" placeholder="El texto reconocido aparecerá aquí..."></textarea></div><div><div class="toolrow"><button class="btn small" id="runCodes">Detectar QR / códigos</button></div><div class="stringbox" id="codesOut" style="min-height:180px">Sin ejecutar.</div></div></div></div></details>
+
+  <div class="section-title"><span class="num">6</span><h2>COMPARAR DOS FOTOGRAFÍAS</h2></div>
+  <details class="category" open><summary>Comparador visual y perceptual</summary><div class="cat-body"><p class="cat-intro">Carga dos imágenes. RASTRO-IMAGE las normaliza para comparar estructura visual, calcula hashes perceptuales y genera una imagen diferencial. No realiza identificación biométrica de personas.</p>
+   <div class="compare-upload"><div class="mini-drop" id="dropA"><div><b>IMAGEN A</b><div style="font-size:10px;color:var(--ink-soft)">Pulsa o arrastra</div><img id="prevA" class="hidden"><div id="nameA" style="font-size:9.5px;margin-top:5px">—</div></div></div><div class="mini-drop" id="dropB"><div><b>IMAGEN B</b><div style="font-size:10px;color:var(--ink-soft)">Pulsa o arrastra</div><img id="prevB" class="hidden"><div id="nameB" style="font-size:9.5px;margin-top:5px">—</div></div></div></div>
+   <input type="file" id="fileA" hidden><input type="file" id="fileB" hidden>
+   <div class="toolrow"><button class="btn green" id="compareBtn" disabled>Comparar imágenes</button><button class="btn small ghost" id="swapCompare">Intercambiar A/B</button></div>
+   <div class="compare-stats" style="margin-top:12px"><div class="compare-stat"><b id="cmpHash">—</b><span>Similitud perceptual dHash</span></div><div class="compare-stat"><b id="cmpPixel">—</b><span>Similitud visual normalizada</span></div><div class="compare-stat"><b id="cmpExact">—</b><span>Coincidencia SHA-256</span></div></div>
+   <div class="compare-view"><div><div style="font-size:9.5px;margin-bottom:4px">A NORMALIZADA</div><canvas id="cmpA"></canvas></div><div><div style="font-size:9.5px;margin-bottom:4px">B NORMALIZADA</div><canvas id="cmpB"></canvas></div><div><div style="font-size:9.5px;margin-bottom:4px">DIFERENCIA</div><canvas id="cmpDiff"></canvas></div></div>
+   <div class="range-row" style="margin-top:12px"><span>Superposición A/B</span><input type="range" id="blendRange" min="0" max="100" value="50"><b id="blendVal">50%</b></div><div class="canvas-card"><canvas id="cmpBlend"></canvas></div>
+  </div></details>
+
+  <div class="section-title"><span class="num">7</span><h2>RESUMEN PARA EL INVESTIGADOR</h2></div>
+  <p class="section-desc">Recoge automáticamente los principales datos técnicos, indicadores, pivotes y resultados ejecutados en esta sesión.</p>
+  <textarea class="report" id="report" readonly>Carga una imagen para generar el resumen.</textarea>
+  <div class="toolrow"><button class="btn" id="refreshReport">Actualizar resumen</button><button class="btn small ghost" id="copyReport">Copiar</button><button class="btn small green" id="downloadTxt">Exportar TXT</button><button class="btn small green" id="downloadJson">Expediente JSON</button></div>
+
+  <div class="footer"><b>RASTRO-IMAGE</b> · herramienta OSINT local-first · Los resultados automáticos son apoyo al análisis y requieren valoración humana y contextual.</div>
+ </div>
+</div>
+
+<script>
+'use strict';
+
+/* =========================================================================
+ * RASTRO-IMAGE · utilidades base
+ * ========================================================================= */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+const state = {
+  file: null, img: null, url: null, bytes: null, magic: '—',
+  hashes: {}, meta: {}, gpsCandidates: [],
+  palette: [], strings: [], ocr: '', codes: [], crops: [],
+  compare: { A: null, B: null }
+};
+
+const esc = v => String(v ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+const fmtBytes = n => n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(2)} MB`;
+const safeBase = () => ((state.file?.name || 'imagen').replace(/\.[^.]+$/, '').replace(/[^a-z0-9_-]+/gi, '_').slice(0, 60) || 'imagen');
+const download = (text, name, type = 'text/plain') => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+};
+const clip = async t => { try { await navigator.clipboard.writeText(t || ''); } catch {} };
+function openSafe(url) { window.open(url, '_blank', 'noopener,noreferrer'); }
+
+/* =========================================================================
+ * Carga del archivo principal
+ * ========================================================================= */
+const mainFile = $('#mainFile'), dropMain = $('#dropMain');
+dropMain.onclick = () => mainFile.click();
+$('#btnChange').onclick = () => mainFile.click();
+['dragenter', 'dragover'].forEach(e => dropMain.addEventListener(e, x => { x.preventDefault(); dropMain.classList.add('drag'); }));
+['dragleave', 'drop'].forEach(e => dropMain.addEventListener(e, x => { x.preventDefault(); dropMain.classList.remove('drag'); }));
+dropMain.addEventListener('drop', e => { const f = e.dataTransfer.files?.[0]; if (f) loadMain(f); });
+mainFile.onchange = e => { if (e.target.files?.[0]) loadMain(e.target.files[0]); };
+$('#btnClear').onclick = () => location.reload();
+
+async function loadMain(file) {
+  if (!file.type.startsWith('image/') && !/\.(jpg|jpeg|png|webp|gif|bmp|tif|tiff|heic|avif)$/i.test(file.name)) {
+    alert('Selecciona un archivo de imagen.');
+    return;
+  }
+  if (state.url) URL.revokeObjectURL(state.url);
+  state.file = file;
+  state.bytes = await file.arrayBuffer();
+  state.url = URL.createObjectURL(file);
+  state.hashes = {}; state.meta = {}; state.gpsCandidates = [];
+  state.gps = null; state.gpsPlaceholder = null; state.integrity = null;
+  state.ocr = ''; state.codes = []; state.strings = []; state.crops = [];
+
+  const img = new Image();
+  state.img = img;
+  img.onload = async () => {
+    $('#mainPreview').src = state.url;
+    $('#mainPreviewCard').classList.remove('hidden');
+    dropMain.classList.add('hidden');
+    $('#mainName').textContent = file.name;
+    $('#mainSize').textContent = fmtBytes(file.size);
+    $('#stDimensions').textContent = `${img.naturalWidth}×${img.naturalHeight}`;
+
+    await Promise.all([computeHashes(), readMeta(), computePalette(), extractStrings()]);
+    detectMagic();
+    // Estos tres valores dependen solo de hashes/meta/gpsCandidates ya resueltos:
+    // se calculan una única vez aquí y se reutilizan en todos los render*() y en
+    // el informe/expediente, en lugar de recalcularse en cada llamada.
+    state.gpsPlaceholder = detectGpsPlaceholder();
+    state.gps = getGps();
+    state.integrity = computeMetadataIntegrity();
+    renderTech();
+    renderMeta();
+    renderMetadataIntegrity();
+    renderGeo();
+    renderFindings();
+    drawInspect('original');
+    computeELA();
+    drawHistogram();
+    buildReport();
+  };
+  img.onerror = () => alert('No se pudo decodificar la imagen en este navegador.');
+  img.src = state.url;
+}
+
+function detectMagic() {
+  const u = new Uint8Array(state.bytes || new ArrayBuffer(0));
+  const hex = [...u.slice(0, 16)].map(x => x.toString(16).padStart(2, '0')).join('');
+  let type = 'Desconocido';
+  if (hex.startsWith('ffd8ff')) type = 'JPEG';
+  else if (hex.startsWith('89504e470d0a1a0a')) type = 'PNG';
+  else if (hex.startsWith('47494638')) type = 'GIF';
+  else if (hex.startsWith('52494646') && String.fromCharCode(...u.slice(8, 12)) === 'WEBP') type = 'WEBP';
+  else if (hex.startsWith('424d')) type = 'BMP';
+  else if (hex.startsWith('49492a00') || hex.startsWith('4d4d002a')) type = 'TIFF';
+  else if (String.fromCharCode(...u.slice(4, 12)).includes('ftyp')) type = 'ISO-BMFF/HEIF/AVIF';
+  state.magic = type;
+  $('#stType').textContent = `${type} / ${(state.file.type || 'sin MIME').replace('image/', '')}`;
+}
+
+/* =========================================================================
+ * Hashes de integridad (SHA-256, SHA-1, MD5, aHash, dHash)
+ * ========================================================================= */
+async function digest(alg) {
+  const b = await crypto.subtle.digest(alg, state.bytes);
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+async function computeHashes() {
+  state.hashes.sha256 = await digest('SHA-256');
+  state.hashes.sha1 = await digest('SHA-1');
+  state.hashes.md5 = window.SparkMD5 ? SparkMD5.ArrayBuffer.hash(state.bytes) : 'no disponible';
+  state.hashes.ahash = imgHash(state.img, 'a');
+  state.hashes.dhash = imgHash(state.img, 'd');
+}
+function imgHash(img, mode = 'd') {
+  const c = document.createElement('canvas'), ctx = c.getContext('2d', { willReadFrequently: true });
+  if (mode === 'a') {
+    c.width = c.height = 8;
+    ctx.drawImage(img, 0, 0, 8, 8);
+    const d = ctx.getImageData(0, 0, 8, 8).data, vals = [];
+    for (let i = 0; i < d.length; i += 4) vals.push(.299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2]);
+    const av = vals.reduce((a, b) => a + b, 0) / vals.length;
+    return bitsHex(vals.map(v => v >= av ? 1 : 0).join(''));
+  }
+  c.width = 9; c.height = 8;
+  ctx.drawImage(img, 0, 0, 9, 8);
+  const d = ctx.getImageData(0, 0, 9, 8).data;
+  let bits = '';
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+    const a = (y * 9 + x) * 4, b = a + 4;
+    const ga = .299 * d[a] + .587 * d[a + 1] + .114 * d[a + 2];
+    const gb = .299 * d[b] + .587 * d[b + 1] + .114 * d[b + 2];
+    bits += ga > gb ? '1' : '0';
+  }
+  return bitsHex(bits);
+}
+function bitsHex(bits) { return (bits.match(/.{4}/g) || []).map(x => parseInt(x, 2).toString(16)).join(''); }
+
+/* =========================================================================
+ * Lectura de metadatos EXIF / XMP / IPTC con dos motores independientes
+ * ========================================================================= */
+async function readMeta() {
+  state.meta = {};
+  state.gpsCandidates = [];
+  const errors = [];
+
+  // Motor 1: exifr — lectura completa de EXIF/XMP/IPTC/ICC.
+  if (window.exifr) {
+    try {
+      state.meta = await exifr.parse(state.bytes, {
+        tiff: true, ifd0: true, ifd1: true, exif: true, gps: true, xmp: true, iptc: true, icc: true,
+        userComment: true, translateValues: true, reviveValues: true, sanitize: true, mergeOutput: true, chunked: true
+      }) || {};
+    } catch (e) { errors.push('exifr.parse: ' + e.message); }
+
+    // Motor 1b: lector GPS dedicado de exifr sobre los bytes originales.
+    try {
+      const g = await exifr.gps(state.bytes);
+      if (g && Number.isFinite(Number(g.latitude)) && Number.isFinite(Number(g.longitude))) {
+        state.gpsCandidates.push({ lat: Number(g.latitude), lon: Number(g.longitude), source: 'exifr (motor 1)' });
+      }
+    } catch (e) { errors.push('exifr.gps: ' + e.message); }
+  }
+
+  // Motor 2 independiente: ExifReader. Sirve de verificación cruzada y de
+  // respaldo con formatos donde exifr falla (algunos JPEG/HEIC/WebP).
+  if (window.ExifReader) {
+    try {
+      const er = ExifReader.load(state.bytes, { expanded: true });
+      state.exifReader = er;
+      const eg = er && er.gps;
+      const lat = tagNumber(eg && eg.Latitude), lon = tagNumber(eg && eg.Longitude);
+      if (Number.isFinite(lat) && Number.isFinite(lon)) {
+        state.gpsCandidates.push({ lat, lon, source: 'ExifReader (motor 2)' });
+      }
+      if (er && er.exif) {
+        for (const [k, v] of Object.entries(er.exif)) {
+          const val = tagValue(v);
+          if (val !== undefined && state.meta[k] === undefined) state.meta[k] = val;
+        }
+      }
+      if (eg) {
+        for (const [k, v] of Object.entries(eg)) {
+          const val = tagValue(v);
+          if (val !== undefined) state.meta['ExifReader.GPS.' + k] = val;
+        }
+      }
+    } catch (e) { errors.push('ExifReader: ' + e.message); }
+  }
+
+  // Motor 3 (respaldo): reconstrucción manual desde los metadatos combinados,
+  // por si algún contenedor expone el GPS con una disposición de tags atípica.
+  const m = state.meta;
+  const rawLat = m.latitude ?? m.Latitude ?? m.GPSLatitude ?? m.gps?.latitude ?? m.gps?.Latitude;
+  const rawLon = m.longitude ?? m.Longitude ?? m.GPSLongitude ?? m.gps?.longitude ?? m.gps?.Longitude;
+  const fbLat = dmsToDecimal(rawLat, m.GPSLatitudeRef ?? m.gps?.GPSLatitudeRef);
+  const fbLon = dmsToDecimal(rawLon, m.GPSLongitudeRef ?? m.gps?.GPSLongitudeRef);
+  if (Number.isFinite(fbLat) && Number.isFinite(fbLon) && Math.abs(fbLat) <= 90 && Math.abs(fbLon) <= 180) {
+    const alreadyPresent = state.gpsCandidates.some(c => Math.abs(c.lat - fbLat) < 1e-9 && Math.abs(c.lon - fbLon) < 1e-9);
+    if (!alreadyPresent) state.gpsCandidates.push({ lat: fbLat, lon: fbLon, source: 'metadatos combinados' });
+  }
+
+  if (errors.length) state.meta._parserDiagnostics = errors.join(' | ');
+  $('#stMeta').textContent = Object.keys(state.meta).length;
+}
+
+function tagValue(t) {
+  if (t == null) return undefined;
+  if (typeof t === 'number' || typeof t === 'string' || typeof t === 'boolean') return t;
+  if (t.value !== undefined) return t.value;
+  if (t.description !== undefined) return t.description;
+  return undefined;
+}
+function tagNumber(t) {
+  if (t == null) return NaN;
+  if (typeof t === 'number') return t;
+  if (typeof t === 'string') { const n = Number(t); return Number.isFinite(n) ? n : NaN; }
+  for (const k of ['value', 'description']) {
+    const v = t[k];
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    if (typeof v === 'string') { const n = Number(v.replace(',', '.')); if (Number.isFinite(n)) return n; }
+  }
+  return NaN;
+}
+function rationalNumber(v) {
+  if (typeof v === 'number') return v;
+  if (v && typeof v === 'object') {
+    if (Number.isFinite(Number(v.value))) return Number(v.value);
+    if (Number.isFinite(Number(v.numerator)) && Number.isFinite(Number(v.denominator)) && Number(v.denominator) !== 0) return Number(v.numerator) / Number(v.denominator);
+  }
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+function dmsToDecimal(value, ref) {
+  if (Number.isFinite(Number(value))) return Number(value);
+  const a = Array.isArray(value) ? value : (value && Array.isArray(value.value) ? value.value : null);
+  if (!a || a.length < 2) return null;
+  const d = rationalNumber(a[0]), m = rationalNumber(a[1]), sec = rationalNumber(a[2] ?? 0);
+  if (d == null || m == null || sec == null) return null;
+  let out = Math.abs(d) + m / 60 + sec / 3600;
+  if (String(ref || '').toUpperCase() === 'S' || String(ref || '').toUpperCase() === 'W' || d < 0) out = -out;
+  return out;
+}
+
+/* =========================================================================
+ * GPS — extracción reforzada, verificación cruzada y formatos de salida
+ * ========================================================================= */
+function haversineMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000, toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function decToDms(deg, isLat) {
+  const ref = isLat ? (deg >= 0 ? 'N' : 'S') : (deg >= 0 ? 'E' : 'W');
+  const abs = Math.abs(deg);
+  const d = Math.floor(abs);
+  const minFloat = (abs - d) * 60;
+  const m = Math.floor(minFloat);
+  const s = (minFloat - m) * 60;
+  return `${d}\u00B0${m}\u2032${s.toFixed(2)}\u2033${ref}`;
+}
+// Acepta grados decimales ("40.4468", "40,4468") o notación DMS
+// ("40°26'46.3"N", "40 26 46.3 N"...) para las coordenadas manuales.
+function parseCoordInput(str) {
+  if (str == null) return NaN;
+  str = String(str).trim();
+  if (!str) return NaN;
+  if (/^-?\d+([.,]\d+)?$/.test(str)) return Number(str.replace(',', '.'));
+  const m = str.match(/(-?\d+(?:[.,]\d+)?)[°\s]+(\d+(?:[.,]\d+)?)?['\u2032\s]*(\d+(?:[.,]\d+)?)?["\u2033\s]*([NSEWnsew])?/);
+  if (!m) return NaN;
+  const d = parseFloat((m[1] || '0').replace(',', '.'));
+  const mm = parseFloat((m[2] || '0').replace(',', '.'));
+  const ss = parseFloat((m[3] || '0').replace(',', '.'));
+  const ref = (m[4] || '').toUpperCase();
+  let val = Math.abs(d) + mm / 60 + ss / 3600;
+  if (d < 0 || ref === 'S' || ref === 'W') val = -val;
+  return val;
+}
+function auxGpsNumber(...vals) { for (const v of vals) { const n = tagNumber(v); if (Number.isFinite(n)) return n; } return null; }
+function auxGpsText(...vals) { for (const v of vals) { const t = tagValue(v) ?? v; if (t != null && String(t).trim() !== '') return String(t); } return null; }
+
+// Detecta un IFD de GPS "esqueleto": el contenedor reserva el bloque GPS
+// (GPSVersionID, referencias, timestamp...) pero sin coordenadas válidas.
+// Es el patrón habitual en Android/Pixel cuando la ubicación estaba
+// desactivada o no hubo señal en el instante de la captura, y es una señal
+// distinta de la ausencia total de bloque GPS: indica que el dispositivo
+// SÍ intentó geolocalizar. Requiere que ExifReader haya podido cargar el
+// archivo, ya que es el motor que conserva estas etiquetas vacías.
+function detectGpsPlaceholder() {
+  if (state.gpsCandidates.length) return null; // ya hay coordenadas válidas, no aplica
+  const eg = state.exifReader && state.exifReader.gps;
+  if (!eg || !Object.keys(eg).length) return null;
+  const latRef = tagValue(eg.GPSLatitudeRef);
+  const lonRef = tagValue(eg.GPSLongitudeRef);
+  const hasRef = (latRef != null && String(latRef).trim() !== '') || (lonRef != null && String(lonRef).trim() !== '');
+  return { present: true, emptyRef: !hasRef, fields: Object.keys(eg) };
+}
+
+// Devuelve la ficha GPS resuelta: coordenadas primarias, todos los campos
+// GPS adicionales disponibles, y un diagnóstico de integridad/verificación.
+function getGps() {
+  const cands = state.gpsCandidates || [];
+  if (!cands.length) return null;
+
+  const primary = cands[0];
+  let agreement = cands.length > 1 ? 'confirmed' : 'single';
+  let maxDeltaM = 0;
+  for (const c of cands.slice(1)) {
+    const d = haversineMeters(primary.lat, primary.lon, c.lat, c.lon);
+    if (d > maxDeltaM) maxDeltaM = d;
+    if (d > 25) agreement = 'mismatch'; // >25 m entre motores independientes: revisar
+  }
+
+  const m = state.meta || {};
+  const alt = rationalNumber(m.GPSAltitude ?? m.altitude ?? m.gps?.Altitude);
+  const altRefRaw = auxGpsText(m.GPSAltitudeRef, m.gps?.GPSAltitudeRef);
+  const altRef = altRefRaw != null ? (/^1$|below/i.test(altRefRaw) ? 'bajo el nivel del mar' : 'sobre el nivel del mar') : null;
+  const direction = auxGpsNumber(m.GPSImgDirection, m.gps?.GPSImgDirection);
+  const directionRef = auxGpsText(m.GPSImgDirectionRef, m.gps?.GPSImgDirectionRef);
+  const speed = auxGpsNumber(m.GPSSpeed, m.gps?.GPSSpeed);
+  const speedRef = auxGpsText(m.GPSSpeedRef, m.gps?.GPSSpeedRef);
+  const processingMethod = auxGpsText(m.GPSProcessingMethod, m.gps?.GPSProcessingMethod);
+  const satellites = auxGpsText(m.GPSSatellites, m.gps?.GPSSatellites);
+  const dop = auxGpsNumber(m.GPSDOP, m.GPSHPositioningError, m.gps?.GPSDOP, m.gps?.GPSHPositioningError);
+
+  // Fecha/hora GPS en UTC (independiente del reloj del dispositivo).
+  const dateStamp = auxGpsText(m.GPSDateStamp, m.gps?.GPSDateStamp);
+  const timeStampRaw = m.GPSTimeStamp ?? m.gps?.GPSTimeStamp;
+  let gpsUTC = null;
+  if (dateStamp) {
+    let hh = 0, mm = 0, ss = 0;
+    const arr = Array.isArray(timeStampRaw) ? timeStampRaw : (timeStampRaw && Array.isArray(timeStampRaw.value) ? timeStampRaw.value : null);
+    if (arr) [hh, mm, ss] = arr.map(v => rationalNumber(v) || 0);
+    const dParts = dateStamp.split(/[:\-]/).map(Number);
+    if (dParts.length === 3 && dParts.every(Number.isFinite)) {
+      gpsUTC = new Date(Date.UTC(dParts[0], dParts[1] - 1, dParts[2], hh, mm, Math.round(ss)));
+    }
+  }
+
+  // Precisión aparente: nº de decimales conservados en el valor original.
+  const decimalsLat = (String(primary.lat).split('.')[1] || '').length;
+  const decimalsLon = (String(primary.lon).split('.')[1] || '').length;
+  const precisionDigits = Math.min(decimalsLat, decimalsLon);
+  const metersPerDegLat = 111320;
+  const precisionMeters = precisionDigits > 0 ? metersPerDegLat / Math.pow(10, precisionDigits) : null;
+
+  const flags = [];
+  if (Math.abs(primary.lat) < 0.0005 && Math.abs(primary.lon) < 0.0005) {
+    flags.push({ level: 'bad', title: 'Coordenadas en (0,0)', detail: 'El punto coincide con el origen geográfico ("Null Island"). Habitualmente indica un valor por defecto, un error de parseo o un placeholder, no una ubicación real.' });
+  }
+  if (agreement === 'mismatch') {
+    flags.push({ level: 'bad', title: 'Discrepancia entre motores de lectura', detail: `Los analizadores EXIF independientes obtienen coordenadas distintas (diferencia aproximada de ${Math.round(maxDeltaM)} m). Verifica manualmente contra el archivo original antes de dar el dato por bueno.` });
+  }
+  if (agreement === 'confirmed') {
+    flags.push({ level: 'good', title: 'Coordenadas confirmadas por dos motores', detail: 'Dos analizadores EXIF independientes obtienen el mismo punto, lo que refuerza la fiabilidad de la lectura.' });
+  }
+  if (precisionDigits !== null && precisionDigits <= 3) {
+    flags.push({ level: 'warn', title: 'Precisión declarada baja', detail: `Las coordenadas conservan ${precisionDigits} decimal(es) (~${precisionMeters ? Math.round(precisionMeters) + ' m' : '—'} de resolución aproximada). Puede deberse a redondeo del dispositivo, de la app, o a una edición posterior del archivo.` });
+  }
+  if (gpsUTC) {
+    const dt = m.DateTimeOriginal || m.CreateDate;
+    if (dt instanceof Date && Math.abs(dt.getTime() - gpsUTC.getTime()) > 1000 * 60 * 60 * 36) {
+      flags.push({ level: 'warn', title: 'Desfase entre fecha EXIF y fecha GPS', detail: 'La marca de tiempo GPS (UTC) y la fecha de captura declarada difieren en más de 36 horas. Puede deberse al huso horario, a un reloj del dispositivo mal ajustado, o a una edición posterior de alguno de los dos valores.' });
+    }
+  }
+
+  return {
+    lat: primary.lat, lon: primary.lon, source: primary.source, agreement, maxDeltaM,
+    alt, altRef, direction, directionRef, speed, speedRef,
+    processingMethod, satellites, dop, gpsUTC,
+    precisionDigits, precisionMeters, flags, candidates: cands
+  };
+}
+
+function mapsUrl(g) { return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(g.lat + ',' + g.lon)}`; }
+function streetUrl(g) { return `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${encodeURIComponent(g.lat + ',' + g.lon)}`; }
+function osmUrl(g) { return `https://www.openstreetmap.org/?mlat=${g.lat}&mlon=${g.lon}#map=18/${g.lat}/${g.lon}`; }
+function bingUrl(g) { return `https://www.bing.com/maps?cp=${g.lat}~${g.lon}&lvl=18&sp=point.${g.lat}_${g.lon}`; }
+function earthUrl(g) { return `https://earth.google.com/web/search/${g.lat},${g.lon}`; }
+function geoUri(g) { return `geo:${g.lat},${g.lon}?q=${encodeURIComponent(g.lat + ',' + g.lon)}`; }
+
+function gpsFullText(g) {
+  const lines = [
+    `Coordenadas: ${g.lat.toFixed(7)}, ${g.lon.toFixed(7)}`,
+    `DMS: ${decToDms(g.lat, true)} ${decToDms(g.lon, false)}`,
+    `Fuente: ${g.source}${g.agreement === 'confirmed' ? ' (confirmado por 2 motores)' : g.agreement === 'mismatch' ? ' (⚠ discrepancia entre motores)' : ' (no verificado por un segundo motor)'}`,
+  ];
+  if (g.alt != null) lines.push(`Altitud: ${g.alt.toFixed(1)} m${g.altRef ? ` (${g.altRef})` : ''}`);
+  if (g.direction != null) lines.push(`Rumbo de la cámara: ${g.direction.toFixed(1)}°${g.directionRef ? ` (${g.directionRef})` : ''}`);
+  if (g.speed != null) lines.push(`Velocidad declarada: ${g.speed}${g.speedRef ? ` ${g.speedRef}` : ''}`);
+  if (g.processingMethod) lines.push(`Método de posicionamiento: ${g.processingMethod}`);
+  if (g.satellites) lines.push(`Satélites: ${g.satellites}`);
+  if (g.dop != null) lines.push(`DOP / error horizontal: ${g.dop}`);
+  if (g.gpsUTC) lines.push(`Fecha/hora GPS (UTC): ${g.gpsUTC.toISOString().replace('T', ' ').slice(0, 19)}`);
+  if (g.precisionMeters != null) lines.push(`Precisión aparente: ±${Math.round(g.precisionMeters)} m (${g.precisionDigits} decimales)`);
+  lines.push(`Google Maps: ${mapsUrl(g)}`);
+  return lines.join('\n');
+}
+function gpsGeoJSON(g) {
+  return JSON.stringify({
+    type: 'Feature',
+    properties: {
+      source: g.source, engine_agreement: g.agreement,
+      altitude_m: g.alt, altitude_ref: g.altRef,
+      direction_deg: g.direction, direction_ref: g.directionRef,
+      speed: g.speed, speed_ref: g.speedRef,
+      processing_method: g.processingMethod, satellites: g.satellites,
+      gps_datetime_utc: g.gpsUTC ? g.gpsUTC.toISOString() : null,
+      file: state.file?.name, sha256: state.hashes.sha256
+    },
+    geometry: { type: 'Point', coordinates: g.alt != null ? [g.lon, g.lat, g.alt] : [g.lon, g.lat] }
+  }, null, 2);
+}
+function gpsKML(g) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document>
+<Placemark>
+<name>${esc(state.file?.name || 'RASTRO-IMAGE')}</name>
+<description>SHA-256: ${esc(state.hashes.sha256 || '')} · Fuente GPS: ${esc(g.source)}</description>
+<Point><coordinates>${g.lon},${g.lat}${g.alt != null ? ',' + g.alt : ''}</coordinates></Point>
+</Placemark>
+</Document></kml>`;
+}
+
+function renderGeo() {
+  const g = state.gps;
+  const mi = state.integrity || computeMetadataIntegrity();
+  const gpsButtons = ['openAllGeo', 'openGmaps', 'openStreet', 'openOsm', 'openBing', 'openEarth', 'openGeoUri', 'copyGps', 'copyDms', 'copyGpsFull', 'exportGeojson', 'exportKml'];
+  $('#stGps').textContent = g ? 'SÍ' : (mi.gpsPlaceholder ? 'VACÍO' : (mi.exifCore ? 'NO' : 'EXIF Ø'));
+
+  if (g) {
+    $('#gpsCoords').innerHTML = `${g.lat.toFixed(7)}, ${g.lon.toFixed(7)}` +
+      (g.agreement === 'confirmed' ? '<span class="badge good">CONFIRMADO 2 MOTORES</span>' : '') +
+      (g.agreement === 'mismatch' ? '<span class="badge bad">DISCREPANCIA</span>' : '');
+    $('#gpsDms').textContent = `${decToDms(g.lat, true)}  ${decToDms(g.lon, false)}`;
+
+    const bits = [`Fuente: ${g.source}`];
+    if (g.agreement === 'single') bits.push('no verificado por un segundo motor');
+    if (g.alt != null) bits.push(`Altitud: ${g.alt.toFixed(1)} m${g.altRef ? ` (${g.altRef})` : ''}`);
+    if (g.direction != null) bits.push(`Rumbo: ${g.direction.toFixed(1)}°${g.directionRef ? ` (${g.directionRef})` : ''}`);
+    if (g.speed != null) bits.push(`Velocidad: ${g.speed}${g.speedRef ? ` ${g.speedRef}` : ''}`);
+    if (g.processingMethod) bits.push(`Método: ${g.processingMethod}`);
+    if (g.satellites) bits.push(`Satélites: ${g.satellites}`);
+    if (g.dop != null) bits.push(`DOP/error: ${g.dop}`);
+    if (g.gpsUTC) bits.push(`Fecha/hora GPS (UTC): ${g.gpsUTC.toISOString().replace('T', ' ').slice(0, 19)}`);
+    if (g.precisionMeters != null) bits.push(`Precisión aparente: ±${Math.round(g.precisionMeters)} m`);
+    $('#gpsAlt').textContent = bits.join(' · ');
+
+    $('#gpsFlags').innerHTML = g.flags.map(f => `<div class="finding ${f.level}" style="margin-top:7px"><h4>${esc(f.title)}</h4><p>${esc(f.detail)}</p></div>`).join('');
+    gpsButtons.forEach(id => { const el = $('#' + id); if (el) el.disabled = false; });
+  } else {
+    $('#gpsDms').textContent = '—';
+    $('#gpsFlags').innerHTML = '';
+    if (mi.gpsPlaceholder) {
+      $('#gpsCoords').innerHTML = 'GPS VACÍO <span class="badge warn">PLACEHOLDER</span>';
+      $('#gpsAlt').textContent = 'El EXIF reserva el bloque GPS pero sin coordenadas grabadas (ubicación desactivada o sin señal al capturar). Si el dispositivo o la app de galería original muestra ubicación para este archivo, probablemente procede de metadatos asociados por la app/nube, no del propio archivo.';
+    } else {
+      $('#gpsCoords').textContent = mi.exifCore ? 'SIN GPS EXIF' : 'SIN GPS · EXIF MÍNIMO/ELIMINADO';
+      $('#gpsAlt').textContent = mi.exifCore ? 'EXIF fotográfico presente, sin coordenadas accesibles.' : 'La ausencia de GPS no demuestra que el original careciese de ubicación.';
+    }
+    gpsButtons.forEach(id => { const el = $('#' + id); if (el) el.disabled = true; });
+  }
+  updateDistance();
+}
+
+$('#openAllGeo').onclick = () => { const g = state.gps; if (!g) return; openSafe(mapsUrl(g)); openSafe(streetUrl(g)); openSafe(osmUrl(g)); };
+$('#openGmaps').onclick = () => { const g = state.gps; if (g) openSafe(mapsUrl(g)); };
+$('#openStreet').onclick = () => { const g = state.gps; if (g) openSafe(streetUrl(g)); };
+$('#openOsm').onclick = () => { const g = state.gps; if (g) openSafe(osmUrl(g)); };
+$('#openBing').onclick = () => { const g = state.gps; if (g) openSafe(bingUrl(g)); };
+$('#openEarth').onclick = () => { const g = state.gps; if (g) openSafe(earthUrl(g)); };
+$('#openGeoUri').onclick = () => { const g = state.gps; if (g) location.href = geoUri(g); };
+$('#copyGps').onclick = () => { const g = state.gps; if (g) clip(`${g.lat}, ${g.lon}`); };
+$('#copyDms').onclick = () => { const g = state.gps; if (g) clip(`${decToDms(g.lat, true)} ${decToDms(g.lon, false)}`); };
+$('#copyGpsFull').onclick = () => { const g = state.gps; if (g) clip(gpsFullText(g)); };
+$('#exportGeojson').onclick = () => { const g = state.gps; if (g) download(gpsGeoJSON(g), `RASTRO-IMAGE_${safeBase()}_gps.geojson`, 'application/geo+json'); };
+$('#exportKml').onclick = () => { const g = state.gps; if (g) download(gpsKML(g), `RASTRO-IMAGE_${safeBase()}_gps.kml`, 'application/vnd.google-earth.kml+xml'); };
+
+function manualGps() {
+  const lat = parseCoordInput($('#manualLat').value);
+  const lon = parseCoordInput($('#manualLon').value);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+    alert('Introduce coordenadas válidas: grados decimales (ej. 40.4468) o DMS (ej. 40°26\'46.3"N).');
+    return null;
+  }
+  return { lat, lon };
+}
+$('#manualMaps').onclick = () => { const g = manualGps(); if (g) openSafe(mapsUrl(g)); };
+$('#manualStreet').onclick = () => { const g = manualGps(); if (g) openSafe(streetUrl(g)); };
+$('#searchCoords').onclick = () => { const g = manualGps(); if (g) openSafe(`https://www.google.com/search?q=${encodeURIComponent('"' + g.lat + ', ' + g.lon + '"')}`); };
+function updateDistance() {
+  const out = $('#distanceOut');
+  const g = state.gps;
+  const lat = parseCoordInput($('#manualLat').value), lon = parseCoordInput($('#manualLon').value);
+  if (!g || !Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) { out.textContent = '—'; return; }
+  const d = haversineMeters(g.lat, g.lon, lat, lon);
+  out.textContent = d < 1000 ? `${Math.round(d)} m` : `${(d / 1000).toFixed(2)} km`;
+}
+$('#manualLat').oninput = updateDistance;
+$('#manualLon').oninput = updateDistance;
+
+/* =========================================================================
+ * Integridad de metadatos y ficha técnica
+ * ========================================================================= */
+function flattenMeta(obj, prefix = '', out = []) {
+  for (const [k, v] of Object.entries(obj || {})) {
+    const key = prefix ? `${prefix}.${k}` : k;
+    if (v instanceof Date) out.push([key, v.toISOString()]);
+    else if (Array.isArray(v)) out.push([key, v.join(', ')]);
+    else if (v && typeof v === 'object' && out.length < 500) flattenMeta(v, key, out);
+    else if (v !== undefined && v !== null) out.push([key, String(v)]);
+  }
+  return out;
+}
+
+// Cálculo puro (sin efectos secundarios). Se invoca una sola vez por carga
+// desde loadMain() y el resultado se reutiliza vía state.integrity.
+function computeMetadataIntegrity() {
+  const m = state.meta || {}, flat = flattenMeta(m), keys = flat.map(([k]) => k.toLowerCase());
+  const has = rx => keys.some(k => rx.test(k));
+  const gps = !!(state.gps ?? getGps()) || has(/(^|\.)gps|latitude|longitude/);
+  const placeholder = detectGpsPlaceholder();
+  const xmp = has(/xmp|creatortool|photoshop|gainmap|hdrgm/);
+  const iptc = has(/iptc|headline|caption|byline|keywords|objectname/);
+  const exifCore = has(/datetimeoriginal|make$|model$|lens|exposure|fnumber|iso|focallength|offsettime|pixelxdimension|pixelydimension/);
+  const exifAny = has(/exif|ifd|datetimeoriginal|make$|model$|orientation|software/);
+  const meaningful = flat.filter(([k, v]) => !/^_parserdiagnostics$/i.test(k) && String(v).trim() !== '').length;
+
+  let level, title, detail;
+  if (gps) { level = 'good'; title = 'GPS EXIF DETECTADO'; detail = 'El archivo contiene coordenadas accesibles. Los metadatos son datos declarados y deben contrastarse con el contexto y la evidencia original.'; }
+  else if (placeholder && placeholder.present) { level = 'warn'; title = 'GPS VACÍO · CAMPO RESERVADO SIN COORDENADAS'; detail = 'El contenedor EXIF reserva el bloque GPS (versión, referencias, timestamp) pero sin coordenadas válidas. Es el patrón habitual en Android/Pixel cuando la ubicación estaba desactivada o no hubo señal al capturar. No equivale a la ausencia total del bloque GPS: indica que el dispositivo intentó geolocalizar. Si la app o galería del dispositivo original muestra una ubicación para este archivo, probablemente procede de metadatos asociados por la app/nube (p. ej. Google Photos), no del propio archivo — pídelo directamente a esa fuente si es relevante.'; }
+  else if (exifCore) { level = 'warn'; title = 'SIN GPS · EXIF PRESENTE'; detail = 'Se conservan metadatos fotográficos relevantes, pero no se han localizado coordenadas GPS accesibles.'; }
+  else if (exifAny || xmp || iptc || meaningful > 0) { level = 'bad'; title = 'METADATOS EXIF ELIMINADOS / MÍNIMOS'; detail = 'El archivo conserva metadatos mínimos o auxiliares, pero faltan los EXIF fotográficos habituales. Puede haber sido exportado, procesado o compartido mediante un mecanismo que eliminó metadatos. La ausencia de GPS no permite concluir que el archivo original careciese de geolocalización.'; }
+  else { level = 'bad'; title = 'SIN METADATOS FOTOGRÁFICOS ACCESIBLES'; detail = 'No se han localizado EXIF/GPS fotográficos significativos. El archivo puede haber sido sanitizado o generado sin ellos. La ausencia de GPS no demuestra que una versión anterior careciese de ubicación.'; }
+
+  return { level, title, detail, gps, gpsPlaceholder: !!(placeholder && placeholder.present), xmp, iptc, exifCore, exifAny, meaningful };
+}
+function renderMetadataIntegrity() {
+  const r = state.integrity || computeMetadataIntegrity(), el = $('#metaIntegrity');
+  if (!el) return;
+  el.className = 'finding ' + r.level;
+  el.innerHTML = `<h4>${esc(r.title)}</h4><p>${esc(r.detail)}</p><p style="margin-top:6px"><b>EXIF fotográfico:</b> ${r.exifCore ? 'presente' : 'no detectado'} · <b>GPS:</b> ${r.gps ? 'presente' : (r.gpsPlaceholder ? 'placeholder vacío' : 'no detectado')} · <b>XMP:</b> ${r.xmp ? 'presente' : 'no detectado'} · <b>IPTC:</b> ${r.iptc ? 'presente' : 'no detectado'}</p>`;
+}
+
+function renderTech() {
+  const rows = [
+    ['Nombre', state.file.name], ['Tamaño', fmtBytes(state.file.size)], ['MIME declarado', state.file.type || '—'],
+    ['Firma / magic bytes', state.magic], ['Dimensiones', `${state.img.naturalWidth} × ${state.img.naturalHeight} px`],
+    ['Megapíxeles', `${((state.img.naturalWidth * state.img.naturalHeight) / 1e6).toFixed(2)} MP`],
+    ['SHA-256', state.hashes.sha256], ['SHA-1', state.hashes.sha1], ['MD5', state.hashes.md5],
+    ['aHash', state.hashes.ahash], ['dHash', state.hashes.dhash]
+  ];
+  $('#techTable').innerHTML = rows.map(([k, v]) => `<div class="k">${esc(k)}</div><div>${esc(v)}</div>`).join('');
+}
+function renderMeta() {
+  const a = flattenMeta(state.meta).sort((x, y) => x[0].localeCompare(y[0]));
+  $('#metaTable').innerHTML = a.length
+    ? a.map(([k, v]) => `<div class="k">${esc(k)}</div><div>${esc(v)}</div>`).join('')
+    : '<div class="k">Resultado</div><div>No se detectaron metadatos EXIF/XMP/IPTC accesibles.</div>';
+}
+
+async function extractStrings() {
+  const u = new Uint8Array(state.bytes), max = Math.min(u.length, 8 * 1024 * 1024), arr = [];
+  let s = '';
+  for (let i = 0; i < max; i++) {
+    const b = u[i];
+    if ((b >= 32 && b <= 126) || b === 9) { s += String.fromCharCode(b); if (s.length > 300) s = s.slice(-300); }
+    else { if (s.length >= 6) arr.push(s); s = ''; }
+    if (arr.length > 600) break;
+  }
+  if (s.length >= 6) arr.push(s);
+  state.strings = [...new Set(arr)].filter(x => /[A-Za-z]{3}/.test(x)).slice(0, 300);
+  $('#stringsBox').textContent = state.strings.length ? state.strings.join('\n') : 'No se localizaron strings ASCII significativos en el tramo analizado.';
+}
+
+function renderFindings() {
+  if (!state.file) return;
+  const f = [], g = state.gps, m = state.meta;
+  const ext = (state.file.name.split('.').pop() || '').toLowerCase();
+  const expected = { jpg: 'JPEG', jpeg: 'JPEG', png: 'PNG', gif: 'GIF', webp: 'WEBP', bmp: 'BMP', tif: 'TIFF', tiff: 'TIFF' }[ext];
+
+  if (g) {
+    f.push(['warn', 'GPS presente', `${g.lat.toFixed(6)}, ${g.lon.toFixed(6)}${g.agreement === 'confirmed' ? ' · confirmado por 2 motores' : g.agreement === 'mismatch' ? ' · ⚠ discrepancia entre motores' : ''}. Pivote geográfico disponible.`]);
+    g.flags.filter(fl => fl.level !== 'good').forEach(fl => f.push([fl.level, fl.title, fl.detail]));
+  } else {
+    const mi = state.integrity || computeMetadataIntegrity();
+    f.push([mi.level, mi.title, mi.detail]);
+  }
+  const device = [m.Make, m.Model].filter(Boolean).join(' ');
+  if (device) f.push(['good', 'Dispositivo declarado', device]);
+  const sw = m.Software || m.CreatorTool || m.ProcessingSoftware;
+  if (sw) f.push(['warn', 'Software declarado', String(sw)]);
+  const dt = m.DateTimeOriginal || m.CreateDate || m.ModifyDate;
+  if (dt) f.push(['good', 'Fecha declarada', dt instanceof Date ? dt.toLocaleString('es-ES') : String(dt)]);
+  if (expected && expected !== state.magic) f.push(['bad', 'Extensión / firma incoherente', `Extensión .${ext} pero firma detectada ${state.magic}. Revisar renombrado o contenedor.`]);
+  else if (expected) f.push(['good', 'Firma coherente', `La extensión y la firma principal son compatibles (${state.magic}).`]);
+  const urls = state.strings.filter(x => /https?:\/\//i.test(x));
+  if (urls.length) f.push(['warn', 'URLs incrustadas', `${urls.length} cadena(s) con aspecto de URL detectadas.`]);
+
+  $('#findings').innerHTML = f.map(([c, t, p]) => `<div class="finding ${c}"><h4>${esc(t)}</h4><p>${esc(p)}</p></div>`).join('');
+  $('#stFindings').textContent = f.filter(x => x[0] === 'warn' || x[0] === 'bad').length;
+  buildReport();
+}
+
+/* =========================================================================
+ * Copia / exportación de metadatos y hashes
+ * ========================================================================= */
+$('#copySha').onclick = () => clip(state.hashes.sha256);
+$('#copyHashes').onclick = () => clip(Object.entries(state.hashes).map(([k, v]) => `${k.toUpperCase()}: ${v}`).join('\n'));
+$('#copyMeta').onclick = () => clip(JSON.stringify(state.meta, null, 2));
+$('#exportMeta').onclick = () => download(JSON.stringify(state.meta, null, 2), `RASTRO-IMAGE_${safeBase()}_metadata.json`, 'application/json');
+
+/* =========================================================================
+ * External reverse-search engines
+ * ========================================================================= */
+$$('.ext').forEach(b => b.onclick = () => openSafe(b.dataset.url));
+
+/* =========================================================================
+ * Inspección visual · ELA · histograma · paleta
+ * ========================================================================= */
+function fitCanvas(c, max = 1100, img = state.img) {
+  const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  c.width = Math.max(1, Math.round(img.naturalWidth * s));
+  c.height = Math.max(1, Math.round(img.naturalHeight * s));
+  return c.getContext('2d', { willReadFrequently: true });
+}
+function drawInspect(type) {
+  if (!state.img) return;
+  const c = $('#inspectCanvas'), ctx = fitCanvas(c);
+  ctx.drawImage(state.img, 0, 0, c.width, c.height);
+  if (type !== 'original') {
+    const im = ctx.getImageData(0, 0, c.width, c.height), d = im.data;
+    if (type === 'gray' || type === 'invert') {
+      for (let i = 0; i < d.length; i += 4) {
+        if (type === 'gray') { const g = .299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2]; d[i] = d[i + 1] = d[i + 2] = g; }
+        else { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; }
+      }
+    }
+    if (type === 'edges' || type === 'highpass') {
+      const src = new Uint8ClampedArray(d), w = c.width, h = c.height;
+      const k = type === 'edges' ? [-1, -1, -1, -1, 8, -1, -1, -1, -1] : [0, -1, 0, -1, 5, -1, 0, -1, 0];
+      for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) for (let ch = 0; ch < 3; ch++) {
+        let sum = 0, ki = 0;
+        for (let yy = -1; yy <= 1; yy++) for (let xx = -1; xx <= 1; xx++) sum += src[((y + yy) * w + (x + xx)) * 4 + ch] * k[ki++];
+        d[(y * w + x) * 4 + ch] = Math.max(0, Math.min(255, type === 'edges' ? sum + 20 : sum));
+      }
+    }
+    ctx.putImageData(im, 0, 0);
+  }
+  $('#filterLabel').textContent = { original: 'Original', gray: 'Grises', invert: 'Negativo', edges: 'Bordes', highpass: 'High-pass' }[type];
+}
+$$('.filter').forEach(b => b.onclick = () => drawInspect(b.dataset.filter));
+
+async function computeELA() {
+  if (!state.img) return;
+  const q = +$('#elaQ').value / 100, amp = +$('#elaScale').value;
+  const c = $('#elaCanvas'), ctx = fitCanvas(c);
+  ctx.drawImage(state.img, 0, 0, c.width, c.height);
+  const orig = ctx.getImageData(0, 0, c.width, c.height);
+  const tmp = document.createElement('canvas'); tmp.width = c.width; tmp.height = c.height;
+  tmp.getContext('2d').drawImage(state.img, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => tmp.toBlob(r, 'image/jpeg', q));
+  if (!blob) return;
+  const im = new Image(), u = URL.createObjectURL(blob);
+  im.onload = () => {
+    const t = document.createElement('canvas'); t.width = c.width; t.height = c.height;
+    const tx = t.getContext('2d', { willReadFrequently: true });
+    tx.drawImage(im, 0, 0);
+    const rd = tx.getImageData(0, 0, c.width, c.height).data;
+    const out = ctx.createImageData(c.width, c.height);
+    for (let i = 0; i < orig.data.length; i += 4) {
+      out.data[i] = Math.min(255, Math.abs(orig.data[i] - rd[i]) * amp);
+      out.data[i + 1] = Math.min(255, Math.abs(orig.data[i + 1] - rd[i + 1]) * amp);
+      out.data[i + 2] = Math.min(255, Math.abs(orig.data[i + 2] - rd[i + 2]) * amp);
+      out.data[i + 3] = 255;
+    }
+    ctx.putImageData(out, 0, 0);
+    URL.revokeObjectURL(u);
+  };
+  im.src = u;
+}
+// Debounce: el ELA recompone y recomprime un canvas completo, así que no
+// conviene relanzarlo en cada micro-movimiento del slider durante el arrastre.
+function debounce(fn, wait = 120) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+}
+const computeELADebounced = debounce(computeELA, 120);
+$('#elaQ').oninput = e => { $('#elaQv').textContent = e.target.value + '%'; computeELADebounced(); };
+$('#elaScale').oninput = e => { $('#elaSv').textContent = e.target.value + '×'; computeELADebounced(); };
+
+async function computePalette() {
+  const c = document.createElement('canvas'), ctx = c.getContext('2d', { willReadFrequently: true });
+  c.width = c.height = 96;
+  ctx.drawImage(state.img, 0, 0, 96, 96);
+  const d = ctx.getImageData(0, 0, 96, 96).data, bins = new Map();
+  for (let i = 0; i < d.length; i += 16) {
+    const q = x => Math.min(255, Math.round(x / 32) * 32);
+    const k = [q(d[i]), q(d[i + 1]), q(d[i + 2])].join(',');
+    bins.set(k, (bins.get(k) || 0) + 1);
+  }
+  state.palette = [...bins].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([rgb]) => {
+    const p = rgb.split(',').map(Number);
+    const hex = '#' + p.map(x => x.toString(16).padStart(2, '0')).join('');
+    return { rgb, hex };
+  });
+  $('#palette').innerHTML = state.palette.map(x => `<div class="swatch"><i style="background:${x.hex}"></i><span>${x.hex.toUpperCase()}</span></div>`).join('');
+}
+function drawHistogram() {
+  if (!state.img) return;
+  const src = document.createElement('canvas'), x = src.getContext('2d', { willReadFrequently: true });
+  src.width = 320; src.height = Math.max(1, Math.round(320 * state.img.naturalHeight / state.img.naturalWidth));
+  x.drawImage(state.img, 0, 0, src.width, src.height);
+  const d = x.getImageData(0, 0, src.width, src.height).data;
+  const R = new Array(256).fill(0), G = [...R], B = [...R];
+  for (let i = 0; i < d.length; i += 4) { R[d[i]]++; G[d[i + 1]]++; B[d[i + 2]]++; }
+  const c = $('#histCanvas'), ctx = c.getContext('2d');
+  c.width = 600; c.height = 180;
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.strokeStyle = '#9c2b2b'; plot(R);
+  ctx.strokeStyle = '#33502f'; plot(G);
+  ctx.strokeStyle = '#1f3d5c'; plot(B);
+  function plot(a) {
+    const max = Math.max(...a);
+    ctx.beginPath();
+    a.forEach((v, i) => {
+      const px = i / (a.length - 1) * c.width, py = c.height - (v / max) * c.height * .94;
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    });
+    ctx.stroke();
+  }
+}
+
+/* =========================================================================
+ * Recortes de investigación y detección de rostros
+ * ========================================================================= */
+async function addCrop(label, sx, sy, sw, sh) {
+  const c = document.createElement('canvas'), max = 900, scale = Math.min(1, max / Math.max(sw, sh));
+  c.width = Math.round(sw * scale); c.height = Math.round(sh * scale);
+  c.getContext('2d').drawImage(state.img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  const data = c.toDataURL('image/jpeg', .94);
+  const id = 'crop_' + Date.now() + '_' + Math.random().toString(16).slice(2);
+  state.crops.push({ label, data });
+  const div = document.createElement('div');
+  div.className = 'engine';
+  div.innerHTML = `<h3>${esc(label)}</h3><img src="${data}" style="width:100%;height:170px;object-fit:contain;border:1px solid var(--ink);background:#d2c49c"><div class="toolrow"><button class="btn small ghost" data-dl="${id}">Guardar recorte</button></div>`;
+  $('#crops').prepend(div);
+  div.querySelector('[data-dl]').onclick = () => {
+    const a = document.createElement('a');
+    a.href = data;
+    a.download = `RASTRO-IMAGE_${safeBase()}_${label.replace(/\W+/g, '_')}.jpg`;
+    a.click();
+  };
+}
+$$('.cropPreset').forEach(b => b.onclick = () => {
+  if (!state.img) return alert('Carga una imagen.');
+  const w = state.img.naturalWidth, h = state.img.naturalHeight;
+  if (b.dataset.crop === 'center') addCrop('Recorte central', w * .2, h * .2, w * .6, h * .6);
+  if (b.dataset.crop === 'top') addCrop('Mitad superior', 0, 0, w, h * .5);
+  if (b.dataset.crop === 'bottom') addCrop('Mitad inferior', 0, h * .5, w, h * .5);
+});
+$('#detectFaces').onclick = async () => {
+  if (!state.img) return alert('Carga una imagen.');
+  if (!('FaceDetector' in window)) { alert('FaceDetector no está disponible en este navegador. Puedes usar los recortes manuales o probar Chrome/Edge con soporte compatible.'); return; }
+  try {
+    const fd = new FaceDetector({ fastMode: false, maxDetectedFaces: 20 });
+    const faces = await fd.detect(state.img);
+    if (!faces.length) { alert('No se detectaron rostros.'); return; }
+    for (let i = 0; i < faces.length; i++) {
+      const b = faces[i].boundingBox, pad = Math.max(b.width, b.height) * .18;
+      const sx = Math.max(0, b.x - pad), sy = Math.max(0, b.y - pad);
+      const sw = Math.min(state.img.naturalWidth - sx, b.width + pad * 2), sh = Math.min(state.img.naturalHeight - sy, b.height + pad * 2);
+      await addCrop(`Rostro ${i + 1}`, sx, sy, sw, sh);
+    }
+  } catch (e) { alert('No se pudo ejecutar la detección: ' + e.message); }
+};
+
+/* =========================================================================
+ * OCR / QR / códigos de barras
+ * ========================================================================= */
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const old = [...document.scripts].find(s => s.src === src);
+    if (old) { if (window.Tesseract) return res(); old.addEventListener('load', res); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el motor externo'));
+    document.head.appendChild(s);
+  });
+}
+$('#runOcr').onclick = async () => {
+  if (!state.file) return alert('Carga una imagen.');
+  const btn = $('#runOcr');
+  btn.disabled = true; $('#ocrStatus').textContent = 'Cargando OCR…';
+  try {
+    if (!window.Tesseract) await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    const r = await Tesseract.recognize(state.file, $('#ocrLang').value, {
+      logger: m => { if (m.progress != null) $('#ocrBar').style.width = (m.progress * 100) + '%'; $('#ocrStatus').textContent = m.status || 'Procesando…'; }
+    });
+    state.ocr = (r.data.text || '').trim();
+    $('#ocrOut').value = state.ocr;
+    $('#ocrStatus').textContent = `Finalizado · confianza ${Math.round(r.data.confidence || 0)}%`;
+    buildReport();
+  } catch (e) { $('#ocrStatus').textContent = 'Error OCR: ' + e.message; }
+  finally { btn.disabled = false; }
+};
+$('#copyOcr').onclick = () => clip($('#ocrOut').value);
+$('#runCodes').onclick = async () => {
+  if (!state.img) return alert('Carga una imagen.');
+  if (!('BarcodeDetector' in window)) { $('#codesOut').textContent = 'BarcodeDetector no está disponible en este navegador.'; return; }
+  try {
+    const fm = await BarcodeDetector.getSupportedFormats();
+    const det = new BarcodeDetector({ formats: fm });
+    const r = await det.detect(state.img);
+    state.codes = r.map(x => ({ format: x.format, value: x.rawValue }));
+    $('#codesOut').textContent = state.codes.length ? state.codes.map(x => `${x.format}: ${x.value}`).join('\n') : 'No se detectaron códigos.';
+    buildReport();
+  } catch (e) { $('#codesOut').textContent = 'Error: ' + e.message; }
+};
+
+/* =========================================================================
+ * Comparador de dos imágenes (hash perceptual + diferencia de píxeles)
+ * ========================================================================= */
+function setupDrop(zoneId, inputId, key, prevId, nameId) {
+  const z = $('#' + zoneId), inp = $('#' + inputId);
+  z.onclick = () => inp.click();
+  ['dragenter', 'dragover'].forEach(e => z.addEventListener(e, x => x.preventDefault()));
+  z.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) loadCompareFile(key, f, prevId, nameId); });
+  inp.onchange = e => { if (e.target.files?.[0]) loadCompareFile(key, e.target.files[0], prevId, nameId); };
+}
+setupDrop('dropA', 'fileA', 'A', 'prevA', 'nameA');
+setupDrop('dropB', 'fileB', 'B', 'prevB', 'nameB');
+async function loadCompareFile(key, file, prevId, nameId) {
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = async () => {
+    const bytes = await file.arrayBuffer();
+    const sha = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(x => x.toString(16).padStart(2, '0')).join('');
+    state.compare[key] = { file, url, img, sha, dhash: imgHash(img, 'd') };
+    $('#' + prevId).src = url; $('#' + prevId).classList.remove('hidden'); $('#' + nameId).textContent = file.name;
+    $('#compareBtn').disabled = !(state.compare.A && state.compare.B);
+  };
+  img.src = url;
+}
+function hammingHex(a, b) {
+  const A = BigInt('0x' + a), B = BigInt('0x' + b);
+  let x = A ^ B, n = 0;
+  while (x) { n += Number(x & 1n); x >>= 1n; }
+  return n;
+}
+$('#compareBtn').onclick = () => runCompare();
+function normCanvas(id, img, size = 320) {
+  const c = $('#' + id), ctx = c.getContext('2d', { willReadFrequently: true });
+  c.width = c.height = size;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, size, size);
+  const s = Math.min(size / img.naturalWidth, size / img.naturalHeight);
+  const w = img.naturalWidth * s, h = img.naturalHeight * s;
+  ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+  return ctx;
+}
+function runCompare() {
+  const A = state.compare.A, B = state.compare.B;
+  if (!A || !B) return;
+  const ca = normCanvas('cmpA', A.img), cb = normCanvas('cmpB', B.img);
+  const da = ca.getImageData(0, 0, 320, 320).data, db = cb.getImageData(0, 0, 320, 320).data;
+  const dc = $('#cmpDiff'), dx = dc.getContext('2d');
+  dc.width = dc.height = 320;
+  const out = dx.createImageData(320, 320);
+  let err = 0, maxErr = 255 * 255 * 3 * (da.length / 4);
+  for (let i = 0; i < da.length; i += 4) {
+    const r = Math.abs(da[i] - db[i]), g = Math.abs(da[i + 1] - db[i + 1]), b = Math.abs(da[i + 2] - db[i + 2]);
+    err += r * r + g * g + b * b;
+    out.data[i] = Math.min(255, r * 2); out.data[i + 1] = Math.min(255, g * 2); out.data[i + 2] = Math.min(255, b * 2); out.data[i + 3] = 255;
+  }
+  dx.putImageData(out, 0, 0);
+  const dist = hammingHex(A.dhash, B.dhash), hashSim = Math.max(0, 100 * (1 - dist / 64)), pix = Math.max(0, 100 * (1 - err / maxErr));
+  $('#cmpHash').textContent = hashSim.toFixed(1) + '%';
+  $('#cmpPixel').textContent = pix.toFixed(1) + '%';
+  $('#cmpExact').textContent = A.sha === B.sha ? 'SÍ' : 'NO';
+  drawBlend();
+  buildReport();
+}
+function drawBlend() {
+  const A = state.compare.A, B = state.compare.B;
+  if (!A || !B) return;
+  const c = $('#cmpBlend'), ctx = c.getContext('2d');
+  c.width = c.height = 600;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 600, 600);
+  const alpha = +$('#blendRange').value / 100;
+  function draw(img, a) {
+    const s = Math.min(600 / img.naturalWidth, 600 / img.naturalHeight);
+    const w = img.naturalWidth * s, h = img.naturalHeight * s;
+    ctx.globalAlpha = a;
+    ctx.drawImage(img, (600 - w) / 2, (600 - h) / 2, w, h);
+  }
+  draw(A.img, 1); draw(B.img, alpha); ctx.globalAlpha = 1;
+  $('#blendVal').textContent = Math.round(alpha * 100) + '%';
+}
+$('#blendRange').oninput = debounce(drawBlend, 60);
+$('#swapCompare').onclick = () => {
+  const t = state.compare.A; state.compare.A = state.compare.B; state.compare.B = t;
+  for (const [k, p, n] of [['A', 'prevA', 'nameA'], ['B', 'prevB', 'nameB']]) {
+    const x = state.compare[k];
+    if (x) { $('#' + p).src = x.url; $('#' + p).classList.remove('hidden'); $('#' + n).textContent = x.file.name; }
+    else { $('#' + p).classList.add('hidden'); $('#' + n).textContent = '—'; }
+  }
+  if (state.compare.A && state.compare.B) runCompare();
+};
+
+/* =========================================================================
+ * Resumen del investigador y exportaciones finales
+ * ========================================================================= */
+function buildReport() {
+  if (!state.file) { $('#report').value = 'Carga una imagen para generar el resumen.'; return; }
+  const m = state.meta, g = state.gps, mi = state.integrity || computeMetadataIntegrity();
+  const device = [m.Make, m.Model].filter(Boolean).join(' ') || 'No declarado';
+  const sw = m.Software || m.CreatorTool || m.ProcessingSoftware || 'No declarado';
+  const dt = m.DateTimeOriginal || m.CreateDate || m.ModifyDate || 'No detectada';
+  const urls = state.strings.filter(x => /https?:\/\//i.test(x));
+
+  const gpsLine = g
+    ? `${g.lat.toFixed(7)}, ${g.lon.toFixed(7)} (${decToDms(g.lat, true)} ${decToDms(g.lon, false)}) · fuente: ${g.source}` +
+      `${g.agreement === 'confirmed' ? ' · confirmado por 2 motores' : g.agreement === 'mismatch' ? ' · ⚠ discrepancia entre motores' : ''}` +
+      `${g.alt != null ? ` · altitud ${g.alt.toFixed(1)} m${g.altRef ? ` (${g.altRef})` : ''}` : ''}` +
+      `${g.direction != null ? ` · rumbo ${g.direction.toFixed(1)}°` : ''}` +
+      `${g.gpsUTC ? ` · fecha/hora GPS UTC ${g.gpsUTC.toISOString().replace('T', ' ').slice(0, 19)}` : ''}`
+    : 'No detectado';
+  const gpsFlagsText = g && g.flags.length
+    ? '\n  Alertas de integridad GPS:\n' + g.flags.map(f => `  - [${f.level.toUpperCase()}] ${f.title}: ${f.detail}`).join('\n')
+    : '';
+
+  const cmp = state.compare.A && state.compare.B
+    ? `\nCOMPARACIÓN A/B\n- dHash similarity: ${$('#cmpHash').textContent}\n- Visual normalized similarity: ${$('#cmpPixel').textContent}\n- SHA-256 exact match: ${$('#cmpExact').textContent}`
+    : '';
+
+  const text = `RASTRO-IMAGE · RESUMEN PARA EL INVESTIGADOR
+================================================
+Generado: ${new Date().toLocaleString('es-ES')}
+
+1. IDENTIFICACIÓN DEL ARCHIVO
+- Nombre: ${state.file.name}
+- Tamaño: ${fmtBytes(state.file.size)}
+- Dimensiones: ${state.img.naturalWidth} × ${state.img.naturalHeight} px
+- MIME declarado: ${state.file.type || '—'}
+- Firma detectada: ${state.magic}
+
+2. HUELLAS
+- SHA-256: ${state.hashes.sha256 || '—'}
+- SHA-1: ${state.hashes.sha1 || '—'}
+- MD5: ${state.hashes.md5 || '—'}
+- aHash: ${state.hashes.ahash || '—'}
+- dHash: ${state.hashes.dhash || '—'}
+
+3. METADATOS RELEVANTES
+- Campos detectados: ${Object.keys(m).length}
+- Dispositivo: ${device}
+- Software: ${sw}
+- Fecha declarada: ${dt instanceof Date ? dt.toLocaleString('es-ES') : dt}
+- GPS: ${gpsLine}${gpsFlagsText}
+- Integridad de metadatos: ${mi.title}
+- Valoración: ${mi.detail}
+
+4. CONTENIDO EXTRAÍDO
+- Strings ASCII: ${state.strings.length}
+- URLs incrustadas aparentes: ${urls.length}
+- OCR: ${state.ocr ? state.ocr.slice(0, 1200) : 'No ejecutado / sin texto'}
+- Códigos: ${state.codes.length ? state.codes.map(x => `${x.format}: ${x.value}`).join(' | ') : 'No ejecutado / sin hallazgos'}
+- Recortes generados: ${state.crops.length}
+${cmp}
+
+5. PIVOTES RECOMENDADOS
+- Búsqueda inversa general: Google Lens, Bing Visual Search y Yandex Images.
+- Copias/versiones: TinEye.
+- Rostros: PimEyes, cuando resulte procedente conforme a términos y procedimiento aplicable.
+${g ? '- Geolocalización: contrastar coordenadas en Google Maps, Street View, OpenStreetMap y Bing Maps, y revisar coherencia visual del entorno (rumbo, altitud y hora GPS incluidos arriba).' : (mi.gpsPlaceholder ? '- Geolocalización: el EXIF reserva el bloque GPS pero sin coordenadas; si el dispositivo/app original muestra ubicación, solicitarla directamente a esa fuente (no viaja con este archivo). Complementar con análisis visual.' : (mi.exifCore ? '- Geolocalización: no hay GPS EXIF; considerar análisis visual de paisaje, rótulos, arquitectura, sombras, matrículas y texto OCR.' : '- Geolocalización: el archivo presenta EXIF mínimos/ausentes; no inferir que el original carecía de GPS. Intentar obtener el archivo original y complementar con análisis visual.'))}
+- Comparar metadatos, fechas, resoluciones y recortes entre copias localizadas.
+
+6. CAUTELAS
+- EXIF/XMP/IPTC son datos declarados y pueden modificarse o eliminarse.
+- ELA y filtros son indicadores visuales, no una prueba autónoma de edición.
+- Las coordenadas GPS pueden ser confirmadas por dos motores de lectura, pero siguen siendo datos declarados por el archivo: contrastar contra el original y el contexto de obtención.
+- Las búsquedas externas implican tratamiento por servicios de terceros.
+`;
+  $('#report').value = text;
+}
+$('#refreshReport').onclick = buildReport;
+$('#copyReport').onclick = () => clip($('#report').value);
+$('#downloadTxt').onclick = () => { buildReport(); download($('#report').value, `RASTRO-IMAGE_${safeBase()}_informe.txt`); };
+$('#downloadJson').onclick = () => {
+  const g = state.gps;
+  const mi = state.integrity || computeMetadataIntegrity();
+  const gpsOut = g ? {
+    lat: g.lat, lon: g.lon, dms: `${decToDms(g.lat, true)} ${decToDms(g.lon, false)}`,
+    source: g.source, engine_agreement: g.agreement, sources_checked: g.candidates.map(c => c.source),
+    altitude_m: g.alt, altitude_ref: g.altRef, direction_deg: g.direction, direction_ref: g.directionRef,
+    speed: g.speed, speed_ref: g.speedRef, processing_method: g.processingMethod, satellites: g.satellites,
+    dop: g.dop, gps_datetime_utc: g.gpsUTC ? g.gpsUTC.toISOString() : null,
+    precision_decimal_digits: g.precisionDigits, precision_meters_estimate: g.precisionMeters,
+    integrity_flags: g.flags
+  } : (mi.gpsPlaceholder ? { placeholder: true, note: 'El EXIF reserva el bloque GPS pero sin coordenadas válidas (ver metadata_integrity).' } : null);
+  const out = {
+    generated: new Date().toISOString(),
+    file: { name: state.file?.name, size: state.file?.size, type: state.file?.type, width: state.img?.naturalWidth, height: state.img?.naturalHeight, magic: state.magic },
+    hashes: state.hashes,
+    metadata: state.meta,
+    metadata_integrity: mi,
+    gps: gpsOut,
+    strings: state.strings,
+    ocr: state.ocr,
+    codes: state.codes,
+    crops: state.crops.map(x => x.label),
+    comparison: state.compare.A && state.compare.B ? {
+      A: state.compare.A.file.name, B: state.compare.B.file.name,
+      dhash_similarity: $('#cmpHash').textContent, pixel_similarity: $('#cmpPixel').textContent, sha256_exact: $('#cmpExact').textContent
+    } : null
+  };
+  download(JSON.stringify(out, null, 2), `RASTRO-IMAGE_${safeBase()}_expediente.json`, 'application/json');
+};
+</script>
+</body>
+</html>
